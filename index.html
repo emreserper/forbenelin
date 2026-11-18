@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Helin için</title>
+<style>
+:root{--bg:#f6f1e7;--ink:#1f2a22;--green:#3f6b3a;--red:#b3261e}
+*{box-sizing:border-box;margin:0}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--ink);min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:70px 20px 30px;overflow-x:hidden}
+#metre{position:fixed;top:0;left:0;right:0;background:#fff;padding:10px 16px;z-index:5;
+  font-size:.85rem;border-bottom:1px solid #ddd}
+#metre div{height:8px;background:#e5dfd2;border-radius:9px;margin-top:6px;overflow:hidden}
+#metre i{display:block;height:100%;width:0;background:var(--red);transition:width .8s}
+#ses{position:absolute;right:8px;top:2px;padding:4px 8px;background:none;font-size:1.1rem;line-height:1}
+.screen{display:none;max-width:460px;width:100%;text-align:center}
+.screen.on{display:block;animation:gir .5s}
+@keyframes gir{from{opacity:0;transform:translateY(12px)}}
+h1{font-size:1.9rem;margin-bottom:12px}
+p{line-height:1.6;margin-bottom:16px;font-size:1.05rem}
+small.b{display:block;letter-spacing:2px;color:var(--red);margin-bottom:8px;font-size:.8rem}
+button{font:inherit;font-size:1rem;border:0;border-radius:999px;padding:12px 26px;
+  background:var(--green);color:#fff;cursor:pointer}
+.gizli{display:none!important}
+.sira{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.acik{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.kucuk{padding:8px 16px;font-size:.9rem}
+.tepki{min-height:60px;font-style:italic;color:var(--red);padding:0 8px}
+.tepki.kisa{min-height:28px}
+.gec{display:block;margin:14px auto 0;background:none;color:#8a8577;font-size:.85rem;padding:8px 12px;text-decoration:underline}
+
+/* Hafıza */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.card{aspect-ratio:3/4;perspective:600px;cursor:pointer}
+.inner{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.card.open .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;overflow:hidden}
+.back{background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.front{transform:rotateY(180deg);background:#ddd}
+.front img,.kazikap img,.sec img,.simk img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Yakından bak */
+.yakin{width:200px;aspect-ratio:1;margin:0 auto 16px;border-radius:16px;overflow:hidden;background:#ddd}
+.yakin img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s,transform-origin .5s}
+.secenek{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.sec{padding:0;border-radius:10px;overflow:hidden;aspect-ratio:3/4;background:#ddd;border:3px solid transparent;
+  transition:opacity .3s}
+.sec.dogru{border-color:var(--green)}
+.sec.yanlis{opacity:.3}
+
+/* Sırayı hatırla */
+#sim{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:300px;margin:0 auto 16px}
+.simk{padding:0;border-radius:14px;overflow:hidden;aspect-ratio:1;background:#ddd;opacity:.45;
+  transition:opacity .15s,transform .15s}
+.simk.yan{opacity:1;transform:scale(1.05)}
+#sim.bitti .simk{opacity:1}
+
+/* Yapboz */
+.yapkap{position:relative;max-width:340px;margin:0 auto 16px;border-radius:12px;overflow:hidden;background:#ddd}
+#yapboz{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;transition:gap .4s}
+#yapboz.tamam{gap:0}
+.parca{padding:0;border-radius:0;background-color:#ddd;background-size:300% 300%}
+.parca.secili{outline:4px solid var(--red);outline-offset:-4px}
+#ipucuFoto{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;transition:opacity .3s}
+.yapkap.goster #ipucuFoto{opacity:1}
+
+/* Çevir düzelt */
+#cevir{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;max-width:330px;margin:0 auto 16px;
+  border-radius:12px;overflow:hidden;background:#ddd;transition:gap .4s}
+#cevir.tamam{gap:0}
+.kare{padding:0;border-radius:0;aspect-ratio:1;background-color:#ddd;background-repeat:no-repeat;transition:transform .25s}
+
+/* Karanlıkta ara */
+.fenerkap{position:relative;border-radius:16px;overflow:hidden;background:#111;margin:0 auto 16px;touch-action:none}
+.fenerkap img{width:100%;display:block}
+#karanlik{position:absolute;inset:0;background:rgba(12,14,12,.97);color:#fff;display:flex;align-items:center;
+  justify-content:center;transition:opacity .8s;pointer-events:none}
+.yildiz{position:absolute;transform:translate(-50%,-50%) scale(0);font-size:1.2rem;line-height:1;
+  transition:transform .3s;z-index:2;pointer-events:none}
+.yildiz.bulundu{transform:translate(-50%,-50%) scale(1)}
+
+/* Çiz */
+.cizkap{position:relative;border-radius:16px;overflow:hidden;background:#ddd;margin:0 auto 12px}
+.cizkap img{width:100%;display:block}
+#ciz{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.renk{width:36px;height:36px;padding:0;border:2px solid #fff;box-shadow:0 0 0 1px #999}
+.damga{padding:4px 10px;font-size:1.4rem;background:#fff;border:1px solid #ccc}
+.renk.sec2,.damga.sec2{box-shadow:0 0 0 3px var(--ink)}
+
+/* Rötuş */
+#rotusFoto{display:block;max-width:100%;max-height:48vh;margin:0 auto 14px;border-radius:16px}
+.ayar{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;text-align:left;font-size:.9rem;margin-bottom:8px}
+.ayar input{width:100%;accent-color:var(--green)}
+
+/* Kazı kazan */
+.kazikap{position:relative;aspect-ratio:4/5;border-radius:16px;overflow:hidden;background:#ddd;margin-bottom:16px}
+#kazi{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity .6s}
+
+/* Final */
+#album{overflow:hidden;margin-bottom:18px}
+#serit{display:flex;width:max-content;animation:kay linear infinite}
+#serit img{flex:none;height:240px;width:auto;border-radius:10px;display:block;margin-right:8px}
+@keyframes kay{to{transform:translateX(-50%)}}
+</style>
+</head>
+<body>
+
+<div id="metre">İlerleme: <b id="yuzde">%0</b><button id="ses" aria-label="Müziği aç/kapat">🔊</button><div><i id="dolgu"></i></div></div>
+<audio id="muzik" loop preload="auto"></audio>
+
+<!-- 0: Giriş -->
+<section class="screen on" id="s0">
+  <h1 id="kime"></h1>
+  <p id="giris"></p>
+  <button id="basla" onclick="sonraki()">Başla</button>
+</section>
+
+<!-- 1: Hafıza -->
+<section class="screen oyun" id="s1">
+  <h1>Bizi Bul</h1>
+  <p>Aynı iki fotoğrafı eşleştir.</p>
+  <div class="grid" id="grid"></div>
+  <p class="tepki" id="not"></p>
+  <button class="gizli" id="d1" onclick="sonraki()">Sıradaki oyun</button>
+</section>
+
+<!-- 2: Yakından bak -->
+<section class="screen oyun" id="s2">
+  <h1>Yakından Bak</h1>
+  <p>Bu parça hangi fotoğraftan? <b id="turSay">1</b> / <span id="turTop"></span></p>
+  <div class="yakin"><img id="yakinFoto" alt="Yakınlaştırılmış parça"></div>
+  <div class="secenek" id="secenek"></div>
+  <button class="gizli" id="d2">Sıradaki tur</button>
+</section>
+
+<!-- 3: Sırayı hatırla -->
+<section class="screen oyun" id="s3">
+  <h1>Sırayı Hatırla</h1>
+  <p>Fotoğraflar sırayla parlayacak; aynı sırayla dokun. <b id="simSay">0</b> / <span id="simTop"></span></p>
+  <div id="sim"></div>
+  <p class="tepki kisa" id="simNot"></p>
+  <div class="sira">
+    <button id="simBasla">Başlat</button>
+    <button class="gizli" id="d3" onclick="sonraki()">Sıradaki oyun</button>
+  </div>
+</section>
+
+<!-- 4: Yapboz -->
+<section class="screen oyun" id="s4">
+  <h1>Yapboz</h1>
+  <p>İki parçaya sırayla dokun, yer değiştirsinler. <b id="yapSay">1</b> / <span id="yapTop"></span></p>
+  <div class="yapkap" id="yapkap"><div id="yapboz"></div><img id="ipucuFoto" alt=""></div>
+  <p class="tepki kisa" id="yapNot"></p>
+  <div class="sira">
+    <button class="acik kucuk" id="ipucu">İpucu</button>
+    <button class="gizli" id="d4">Sıradaki yapboz</button>
+  </div>
+</section>
+
+<!-- 5: Çevir düzelt -->
+<section class="screen oyun" id="s5">
+  <h1>Çevir Düzelt</h1>
+  <p>Kareler dönmüş. Dokunarak çevir, fotoğraf düzelsin. <b id="cevirSay">1</b> / <span id="cevirTop"></span></p>
+  <div id="cevir"></div>
+  <p class="tepki kisa" id="cevirNot"></p>
+  <button class="gizli" id="d5">Sıradaki fotoğraf</button>
+</section>
+
+<!-- 7: Karanlıkta ara -->
+<section class="screen oyun" id="s7">
+  <h1>Karanlıkta Ara</h1>
+  <p>Parmağın fener. Gizli yıldızları bul. <b id="fenerSay">0</b> / <span id="fenerTop"></span></p>
+  <div class="fenerkap" id="fenerkap"><img id="fenerFoto" alt="Karanlıktaki fotoğraf"><div id="karanlik">Parmağını gezdir</div></div>
+  <p class="tepki kisa" id="fenerNot"></p>
+  <button class="gizli" id="d7" onclick="sonraki()">Sıradaki oyun</button>
+</section>
+
+<!-- 8: Çiz -->
+<section class="screen oyun" id="s8">
+  <h1>Üstümüze Çiz</h1>
+  <p>Fotoğraf senin; istediğin gibi karala.</p>
+  <div class="cizkap" id="cizkap"><img id="cizFoto" alt="Çizim fotoğrafı"><canvas id="ciz"></canvas></div>
+  <div class="sira" id="araclar"></div>
+  <div class="sira">
+    <button class="acik kucuk" id="geri">Geri al</button>
+    <button class="acik kucuk" id="temizle">Temizle</button>
+    <button class="acik kucuk" id="baska">Başka fotoğraf</button>
+    <button class="acik kucuk" id="kaydet">Kaydet</button>
+  </div>
+  <p class="tepki" id="cizNot" style="min-height:0"></p>
+  <button id="d8" onclick="sonraki()">Sıradaki oyun</button>
+</section>
+
+<!-- 9: Rötuş -->
+<section class="screen oyun" id="s9">
+  <h1>Rötuş</h1>
+  <p>Ayarlarla oyna, fotoğrafın havasını değiştir.</p>
+  <img id="rotusFoto" alt="Rötuş fotoğrafı">
+  <div id="ayarlar"></div>
+  <div class="sira" id="hazirlar" style="margin-top:12px"></div>
+  <div class="sira">
+    <button class="acik kucuk" id="rotusBaska">Başka fotoğraf</button>
+    <button id="d9" onclick="sonraki()">Sıradaki oyun</button>
+  </div>
+</section>
+
+<!-- 10: Kazı kazan -->
+<section class="screen oyun" id="s10">
+  <h1>Kazı Kazan</h1>
+  <p>Altında sevdiğim bir kare var. Parmağınla kazı.</p>
+  <div class="kazikap"><img id="kaziFoto" alt="Sürpriz fotoğraf"><canvas id="kazi"></canvas></div>
+  <p class="tepki" id="kaziNot"></p>
+  <button class="gizli" id="d10" onclick="sonraki()">Bitir</button>
+</section>
+
+<!-- 11: Final -->
+<section class="screen" id="s11">
+  <h1 id="sonBaslik"></h1>
+  <p id="sonYazi"></p>
+  <div id="album"></div>
+  <button class="acik" onclick="location.reload()">Baştan oyna</button>
+</section>
+
+<script>
+/* ============ BURAYI DÜZENLE ============ */
+/* Fotoğraf numaraları 0'dan başlar: 0 = foto1 ... 10 = foto11 */
+const AYAR = {
+  isim: "Helin",
+  giris: "Balım, kafan biraz dağılsın diye fotoğraflarımızdan küçük oyunlar yaptım.",
+  fotolar: ["foto1.jpg", "foto2.jpg", "foto3.jpg", "foto4.jpg", "foto5.jpg", "foto6.jpg",
+    "foto7.jpg", "foto8.jpg", "foto9.jpg", "foto10.jpg", "foto11.jpg"],
+  muzik: "muzik.mp3",   /* arka plan müziği; "Başla"ya basınca çalar */
+  sesDuzeyi: .5,        /* 0 ile 1 arası */
+  ciftSayisi: 6,        /* hafıza oyununda her seferinde rastgele seçilen fotoğraf sayısı */
+  notlar: [
+    "Bu sarılma hâlâ geçerli. Süresi hiç dolmuyor.",
+    "Manzara güzeldi ama ben o gün de sana bakıyordum.",
+    "O gün yanında dururken ne kadar şanslı olduğumu düşünüyordum.",
+    "Bu gülüşü her gördüğümde aynı şeyi düşünüyorum: iyi ki.",
+    "Yol uzundu ama sen omzumdayken hiç bitmesin istedim.",
+    "Güneş yüzüne vurmuş, sen gözlerini kapatmışsın. Huzur dediğim şey bu.",
+    "O akşam bir dilek tuttum: bütün doğum günlerinde yanında olmak.",
+    "Sıradan bir akşam yemeğiydi. Seninle olunca öyle kalmadı.",
+    "Kalabalığın ortasında yine sadece seni görüyordum.",
+    "Hava soğuktu, sen yanımdaydın; üşüdüğümü hatırlamıyorum.",
+    "Bu gülüşün sebebi olmak, en sevdiğim iş."
+  ],
+  turSayisi: 5,         /* Yakından Bak kaç tur */
+  yakinZoom: 12,        /* Yakından Bak kaç kat yakınlaştırsın (büyüdükçe zorlaşır) */
+  yakinSecenek: 8,      /* Yakından Bak kaç seçenek göstersin */
+  siraUzunluk: 7,       /* Sırayı Hatırla en fazla kaç adım */
+  yapbozFotolar: [6, 2, 4],   /* yapbozlar sırayla bu fotoğraflarla oynanır */
+  cevirFotolar: [9, 5, 7],   /* Çevir Düzelt sırayla bu fotoğraflarla oynanır */
+  fenerFoto: 7,
+  yildizSayisi: 5,
+  fenerIsik: 48,        /* fener ışığının yarıçapı (piksel); küçüldükçe zorlaşır */
+  cizFoto: 5,
+  rotusFoto: 1,
+  kaziFoto: 3,
+  kaziNot: "En sevdiğim karelerden biri. Sebebi belli: o gülüş.",
+  albumHiz: 5,          /* son sayfadaki şeritte fotoğraf başına saniye; büyüdükçe yavaşlar */
+  sonBaslik: "İyi ki varsın, balım",
+  sonYazi: "Seni seviyorum."
+};
+/* ======================================== */
+
+const $ = id => document.getElementById(id);
+const rast = n => Math.floor(Math.random() * n);
+const karistir = d => { for (let i = d.length - 1; i > 0; i--) { const j = rast(i + 1); [d[i], d[j]] = [d[j], d[i]]; } return d; };
+const hepsi = () => AYAR.fotolar.map((_, i) => i);
+const dugme = (sinif, yazi) => { const b = document.createElement("button"); b.className = sinif; b.textContent = yazi || ""; return b; };
+$("kime").textContent = AYAR.isim + " için";
+$("giris").textContent = AYAR.giris;
+
+/* Ekran geçişi + ilerleme çubuğu */
+const EKRAN = [...document.querySelectorAll(".screen")].map(s => s.id);
+const HAZIRLA = { s3: simHazirla, s4: yapbozHazirla, s5: cevirHazirla, s7: fenerHazirla,
+  s8: cizHazirla, s9: rotusHazirla, s10: kaziHazirla, s11: sonHazirla };
+let simdiki = 0;
+function metre(y){ $("yuzde").textContent = "%" + y; $("dolgu").style.width = y + "%"; }
+function git(id){
+  simdiki = EKRAN.indexOf(id);
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+  $(id).classList.add("on");
+  metre(Math.round(simdiki / (EKRAN.length - 1) * 100));
+  scrollTo(0, 0);
+  if (HAZIRLA[id]) HAZIRLA[id]();
+}
+function sonraki(){ git(EKRAN[simdiki + 1]); }
+document.querySelectorAll(".oyun").forEach((s, i, tum) => {
+  const k = document.createElement("small");
+  k.className = "b"; k.textContent = `OYUN ${i + 1} / ${tum.length}`;
+  s.prepend(k);
+  const g = dugme("gec", "Bu oyunu geç");
+  g.onclick = sonraki;
+  s.appendChild(g);
+});
+/* Fotoğraf dokunmayı yakalayan oyunlarda kutu ekrandan uzun olmasın */
+function sinirla(kap, im){ kap.style.maxWidth = Math.round(innerHeight * .58 * im.naturalWidth / im.naturalHeight) + "px"; }
+
+/* Müzik: tarayıcılar ilk dokunuştan önce ses çalmaya izin vermez, o yüzden "Başla" ile başlar */
+const muzik = $("muzik");
+muzik.src = AYAR.muzik; muzik.volume = AYAR.sesDuzeyi;
+const sesIkon = () => { $("ses").textContent = muzik.paused ? "🔇" : "🔊"; };
+muzik.onplay = muzik.onpause = sesIkon;
+$("ses").onclick = () => { if (muzik.paused) muzik.play().catch(() => {}); else muzik.pause(); };
+$("basla").addEventListener("click", () => muzik.play().catch(() => {}));
+sesIkon();
+
+/* 1: Hafıza */
+let acik = [], kilit = false, bulunan = 0;
+const secim = karistir(hepsi()).slice(0, AYAR.ciftSayisi);
+karistir([...secim, ...secim]).forEach(n => {
+  const k = document.createElement("div");
+  k.className = "card";
+  k.innerHTML = `<div class="inner"><div class="face back">♥</div>
+    <div class="face front"><img src="${AYAR.fotolar[n]}" alt="Fotoğraf ${n + 1}"></div></div>`;
+  k.onclick = () => {
+    if (kilit || k.classList.contains("open")) return;
+    k.classList.add("open");
+    acik.push({ k, n });
+    if (acik.length < 2) return;
+    const [a, b] = acik; acik = [];
+    if (a.n === b.n) {
+      $("not").textContent = AYAR.notlar[a.n];
+      if (++bulunan === secim.length) $("d1").classList.remove("gizli");
+    } else {
+      kilit = true;
+      setTimeout(() => { a.k.classList.remove("open"); b.k.classList.remove("open"); kilit = false; }, 800);
+    }
+  };
+  $("grid").appendChild(k);
+});
+
+/* 2: Yakından bak */
+let tur = 0;
+const turSira = karistir(hepsi()).slice(0, AYAR.turSayisi);
+$("turTop").textContent = turSira.length;
+function turGoster(){
+  const hedef = turSira[tur], im = $("yakinFoto");
+  $("turSay").textContent = tur + 1;
+  $("d2").classList.add("gizli");
+  im.style.transition = "none";
+  im.src = AYAR.fotolar[hedef];
+  im.style.transformOrigin = `${10 + rast(81)}% ${10 + rast(81)}%`;
+  im.style.transform = `scale(${AYAR.yakinZoom})`;
+  im.offsetWidth; im.style.transition = "";
+  const secenekler = karistir([hedef, ...karistir(hepsi().filter(i => i !== hedef)).slice(0, AYAR.yakinSecenek - 1)]);
+  let bitti = false;
+  $("secenek").innerHTML = "";
+  secenekler.forEach(n => {
+    const b = dugme("sec");
+    b.innerHTML = `<img src="${AYAR.fotolar[n]}" alt="Fotoğraf ${n + 1}">`;
+    b.onclick = () => {
+      if (bitti || b.classList.contains("yanlis")) return;
+      if (n !== hedef) {
+        /* yanlışta parça başka bir yere kayar; eleyerek bulmak kolay olmasın */
+        b.classList.add("yanlis");
+        im.style.transformOrigin = `${10 + rast(81)}% ${10 + rast(81)}%`;
+        return;
+      }
+      bitti = true;
+      b.classList.add("dogru");
+      im.style.transform = "scale(1)";
+      $("d2").textContent = tur === turSira.length - 1 ? "Sıradaki oyun" : "Sıradaki tur";
+      $("d2").classList.remove("gizli");
+    };
+    $("secenek").appendChild(b);
+  });
+}
+$("d2").onclick = () => { if (++tur < turSira.length) turGoster(); else sonraki(); };
+turGoster();
+
+/* 3: Sırayı hatırla */
+const sim = { foto: [], dizi: [], uzun: 2, yer: 0, giris: false, bitti: false };
+function simHazirla(){
+  if (sim.foto.length) return;
+  sim.foto = karistir(hepsi()).slice(0, 4);
+  while (sim.dizi.length < AYAR.siraUzunluk) {
+    const n = rast(4);
+    if (n !== sim.dizi[sim.dizi.length - 1]) sim.dizi.push(n);
+  }
+  $("simTop").textContent = AYAR.siraUzunluk;
+  sim.foto.forEach((n, i) => {
+    const b = dugme("simk");
+    b.innerHTML = `<img src="${AYAR.fotolar[n]}" alt="Fotoğraf ${n + 1}">`;
+    b.onclick = () => simDokun(i);
+    $("sim").appendChild(b);
+  });
+}
+function simYak(i, ms){
+  const b = $("sim").children[i];
+  b.classList.add("yan");
+  setTimeout(() => b.classList.remove("yan"), ms);
+}
+function simOynat(){
+  sim.giris = false; sim.yer = 0;
+  $("simSay").textContent = sim.uzun;
+  $("simNot").textContent = "İzle.";
+  for (let k = 0; k < sim.uzun; k++) setTimeout(() => simYak(sim.dizi[k], 450), 500 + k * 700);
+  setTimeout(() => { sim.giris = true; $("simNot").textContent = "Sıra sende."; }, 500 + sim.uzun * 700);
+}
+function simDokun(i){
+  if (!sim.giris || sim.bitti) return;
+  simYak(i, 200);
+  if (i !== sim.dizi[sim.yer]) {
+    sim.giris = false;
+    $("simNot").textContent = "Olmadı, bir daha izle.";
+    setTimeout(simOynat, 1000);
+    return;
+  }
+  if (++sim.yer < sim.uzun) return;
+  if (sim.uzun === AYAR.siraUzunluk) {
+    sim.bitti = true;
+    $("sim").classList.add("bitti");
+    $("simNot").textContent = "Hepsini hatırladın.";
+    $("d3").classList.remove("gizli");
+    return;
+  }
+  sim.uzun++; sim.giris = false;
+  $("simNot").textContent = "Güzel. Bir adım daha.";
+  setTimeout(simOynat, 1000);
+}
+$("simBasla").onclick = () => { $("simBasla").classList.add("gizli"); simOynat(); };
+
+/* 4: Yapboz */
+let yapHazir = false, yapTur = 0;
+function yapbozHazirla(){
+  if (yapHazir) return; yapHazir = true;
+  $("yapTop").textContent = AYAR.yapbozFotolar.length;
+  yapbozKur();
+}
+$("d4").onclick = () => { if (++yapTur < AYAR.yapbozFotolar.length) yapbozKur(); else sonraki(); };
+function yapbozKur(){
+  const src = AYAR.fotolar[AYAR.yapbozFotolar[yapTur]], kap = $("yapboz"), im = new Image();
+  $("ipucuFoto").src = src;
+  $("yapSay").textContent = yapTur + 1;
+  $("yapNot").textContent = "";
+  $("d4").classList.add("gizli");
+  $("ipucu").classList.remove("gizli");
+  kap.classList.remove("tamam");
+  kap.innerHTML = "";
+  im.onload = () => {
+    let dizi, secili = null, bitti = false;
+    do { dizi = karistir([...Array(9).keys()]); } while (dizi.every((v, i) => v === i));
+    function ciz(){
+      kap.innerHTML = "";
+      dizi.forEach((v, yer) => {
+        const b = dugme("parca" + (yer === secili ? " secili" : ""));
+        b.setAttribute("aria-label", "Parça " + (yer + 1));
+        b.style.aspectRatio = im.naturalWidth + " / " + im.naturalHeight;
+        b.style.backgroundImage = `url("${src}")`;
+        b.style.backgroundPosition = `${(v % 3) * 50}% ${Math.floor(v / 3) * 50}%`;
+        b.onclick = () => {
+          if (bitti) return;
+          if (secili === null) secili = yer;
+          else if (secili === yer) secili = null;
+          else {
+            [dizi[secili], dizi[yer]] = [dizi[yer], dizi[secili]];
+            secili = null;
+            if (dizi.every((v, i) => v === i)) {
+              bitti = true;
+              kap.classList.add("tamam");
+              $("yapNot").textContent = "Tamamlandı.";
+              $("ipucu").classList.add("gizli");
+              $("d4").textContent = yapTur === AYAR.yapbozFotolar.length - 1 ? "Sıradaki oyun" : "Sıradaki yapboz";
+              $("d4").classList.remove("gizli");
+            }
+          }
+          ciz();
+        };
+        kap.appendChild(b);
+      });
+    }
+    ciz();
+  };
+  im.src = src;
+}
+$("ipucu").onclick = () => {
+  $("yapkap").classList.add("goster");
+  setTimeout(() => $("yapkap").classList.remove("goster"), 1200);
+};
+
+/* 5: Çevir düzelt (fotoğrafın ortadaki kare kısmı, 3x3) */
+let cevirHazir = false, cevirTur = 0;
+function cevirHazirla(){
+  if (cevirHazir) return; cevirHazir = true;
+  $("cevirTop").textContent = AYAR.cevirFotolar.length;
+  cevirKur();
+}
+$("d5").onclick = () => { if (++cevirTur < AYAR.cevirFotolar.length) cevirKur(); else sonraki(); };
+function cevirKur(){
+  const src = AYAR.fotolar[AYAR.cevirFotolar[cevirTur]], kap = $("cevir"), im = new Image();
+  $("cevirSay").textContent = cevirTur + 1;
+  $("cevirNot").textContent = "";
+  $("d5").classList.add("gizli");
+  kap.classList.remove("tamam");
+  kap.innerHTML = "";
+  im.onload = () => {
+    const o = im.naturalHeight / im.naturalWidth;
+    let aci, bitti = false;
+    do { aci = Array.from({ length: 9 }, () => rast(4) * 90); } while (aci.every(v => v === 0));
+    aci.forEach((a, i) => {
+      const b = dugme("kare"), s = i % 3, t = Math.floor(i / 3);
+      let px, py;
+      if (o >= 1) { b.style.backgroundSize = "300% auto"; px = s * 50; py = ((3 * o - 3) / 2 + t) / (3 * o - 1) * 100; }
+      else { const q = 1 / o; b.style.backgroundSize = "auto 300%"; px = ((3 * q - 3) / 2 + s) / (3 * q - 1) * 100; py = t * 50; }
+      b.setAttribute("aria-label", "Kare " + (i + 1));
+      b.style.backgroundImage = `url("${src}")`;
+      b.style.backgroundPosition = `${px}% ${py}%`;
+      b.style.transform = `rotate(${a}deg)`;
+      b.dataset.aci = a;
+      b.onclick = () => {
+        if (bitti) return;
+        aci[i] += 90;
+        b.style.transform = `rotate(${aci[i]}deg)`;
+        b.dataset.aci = aci[i] % 360;
+        if (aci.every(v => v % 360 === 0)) {
+          bitti = true;
+          kap.classList.add("tamam");
+          $("cevirNot").textContent = "Düzeldi.";
+          $("d5").textContent = cevirTur === AYAR.cevirFotolar.length - 1 ? "Sıradaki oyun" : "Sıradaki fotoğraf";
+          $("d5").classList.remove("gizli");
+        }
+      };
+      kap.appendChild(b);
+    });
+  };
+  im.src = src;
+}
+
+/* 7: Karanlıkta ara */
+let fenerHazir = false;
+function fenerHazirla(){
+  if (fenerHazir) return; fenerHazir = true;
+  const kap = $("fenerkap"), ort = $("karanlik"), im = $("fenerFoto"), yer = [];
+  let say = 0;
+  $("fenerTop").textContent = AYAR.yildizSayisi;
+  im.onload = () => sinirla(kap, im);
+  im.src = AYAR.fotolar[AYAR.fenerFoto];
+  while (yer.length < AYAR.yildizSayisi) {
+    const p = [8 + rast(85), 8 + rast(85)];
+    if (yer.every(q => Math.hypot(q[0] - p[0], q[1] - p[1]) > 20)) yer.push(p);
+  }
+  yer.forEach(([x, y]) => {
+    const s = document.createElement("span");
+    s.className = "yildiz"; s.textContent = "⭐";
+    s.style.left = x + "%"; s.style.top = y + "%";
+    kap.appendChild(s);
+  });
+  kap.onpointerdown = kap.onpointermove = e => {
+    if (say === AYAR.yildizSayisi) return;
+    const r = kap.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    ort.textContent = "";
+    const isik = AYAR.fenerIsik;
+    ort.style.background = `radial-gradient(circle ${isik}px at ${x}px ${y}px, transparent 0, transparent ${isik * .6}px, rgba(12,14,12,.98) ${isik}px)`;
+    kap.querySelectorAll(".yildiz:not(.bulundu)").forEach(s => {
+      const sx = parseFloat(s.style.left) / 100 * r.width, sy = parseFloat(s.style.top) / 100 * r.height;
+      if (Math.hypot(sx - x, sy - y) > isik * .4) return;
+      s.classList.add("bulundu");
+      $("fenerSay").textContent = ++say;
+      if (say === AYAR.yildizSayisi) {
+        ort.style.opacity = 0;
+        $("fenerNot").textContent = "Işıklar açıldı.";
+        $("d7").classList.remove("gizli");
+      }
+    });
+  };
+}
+
+/* 8: Çiz */
+const RENK = ["#ffffff", "#1f2a22", "#e53935", "#ffd23f", "#3fa34d", "#2f6fed", "#ff6fae"];
+const DAMGA = ["❤️", "⭐", "🕶️", "👑", "🎀"];
+const cc = $("ciz"), cx = cc.getContext("2d");
+let cizSira = AYAR.cizFoto, arac = { renk: RENK[2] }, izler = [], aktif = null, cizHazir = false;
+function izCiz(x, w, h){
+  x.clearRect(0, 0, w, h);
+  x.lineCap = x.lineJoin = "round";
+  izler.forEach(z => {
+    if (z.d) {
+      x.font = `${w * .13}px serif`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = "#000";
+      x.fillText(z.d, z.x * w, z.y * h);
+    } else {
+      x.strokeStyle = z.r; x.lineWidth = w * .014;
+      x.beginPath();
+      z.p.forEach(([a, b], i) => i ? x.lineTo(a * w, b * h) : x.moveTo(a * w, b * h));
+      if (z.p.length === 1) x.lineTo(z.p[0][0] * w + .1, z.p[0][1] * h);
+      x.stroke();
+    }
+  });
+}
+const yenile = () => izCiz(cx, cc.width, cc.height);
+function cizBoyut(){
+  if ($("cizFoto").naturalWidth) sinirla($("cizkap"), $("cizFoto"));
+  const r = cc.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  if (!r.width) return;
+  cc.width = Math.round(r.width * d); cc.height = Math.round(r.height * d);
+  yenile();
+}
+function cizHazirla(){
+  if (cizHazir) { cizBoyut(); return; }
+  cizHazir = true;
+  $("cizFoto").onload = cizBoyut;
+  $("cizFoto").src = AYAR.fotolar[cizSira];
+}
+addEventListener("resize", cizBoyut);
+const nokta = e => { const r = cc.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+cc.onpointerdown = e => {
+  const [a, b] = nokta(e);
+  if (arac.d) izler.push({ d: arac.d, x: a, y: b });
+  else { aktif = { r: arac.renk, p: [[a, b]] }; izler.push(aktif); }
+  $("cizNot").textContent = "";
+  yenile();
+};
+cc.onpointermove = e => { if (!aktif) return; aktif.p.push(nokta(e)); yenile(); };
+cc.onpointerup = cc.onpointercancel = cc.onpointerleave = () => { aktif = null; };
+function aracEkle(sinif, yazi, deger, secili){
+  const b = dugme(sinif + (secili ? " sec2" : ""), yazi);
+  if (deger.renk) { b.style.background = deger.renk; b.setAttribute("aria-label", "Renk " + deger.renk); }
+  b.onclick = () => {
+    document.querySelectorAll("#araclar .sec2").forEach(e => e.classList.remove("sec2"));
+    b.classList.add("sec2"); arac = deger;
+  };
+  $("araclar").appendChild(b);
+}
+RENK.forEach((r, i) => aracEkle("renk", "", { renk: r }, i === 2));
+DAMGA.forEach(d => aracEkle("damga", d, { d }, false));
+$("geri").onclick = () => { izler.pop(); yenile(); };
+$("temizle").onclick = () => { izler = []; yenile(); };
+$("baska").onclick = () => {
+  cizSira = (cizSira + 1) % AYAR.fotolar.length;
+  izler = [];
+  $("cizFoto").src = AYAR.fotolar[cizSira];
+};
+$("kaydet").onclick = () => {
+  const im = $("cizFoto"), k = document.createElement("canvas"), u = document.createElement("canvas");
+  k.width = u.width = im.naturalWidth; k.height = u.height = im.naturalHeight;
+  try {
+    const x = k.getContext("2d");
+    x.drawImage(im, 0, 0);
+    izCiz(u.getContext("2d"), u.width, u.height);
+    x.drawImage(u, 0, 0);
+    k.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "bizim-cizim.jpg";
+      a.click();
+      $("cizNot").textContent = "Kaydedildi.";
+    }, "image/jpeg", .9);
+  } catch (hata) {
+    $("cizNot").textContent = "Buradan kaydedilemiyor; ekran görüntüsü alabilirsin.";
+  }
+};
+
+/* 9: Rötuş */
+const SURGU = [["Parlaklık", "brightness", 50, 150, 100, "%"], ["Kontrast", "contrast", 50, 150, 100, "%"],
+  ["Doygunluk", "saturate", 0, 200, 100, "%"], ["Eskitme", "sepia", 0, 100, 0, "%"], ["Renk", "hue-rotate", 0, 360, 0, "deg"]];
+const HAZIR = { "Siyah-beyaz": [100, 110, 0, 0, 0], "Eski film": [105, 90, 80, 70, 0], "Canlı": [105, 115, 160, 0, 0],
+  "Sıfırla": [100, 100, 100, 0, 0] };
+let rotusSira = AYAR.rotusFoto, rotusHazir = false;
+function rotusUygula(){
+  $("rotusFoto").style.filter = SURGU.map((s, i) => `${s[1]}(${$("surgu" + i).value}${s[5]})`).join(" ");
+}
+function rotusHazirla(){
+  if (rotusHazir) return; rotusHazir = true;
+  $("rotusFoto").src = AYAR.fotolar[rotusSira];
+  SURGU.forEach(([ad, , enAz, enCok, ilk], i) => {
+    const l = document.createElement("label");
+    l.className = "ayar";
+    l.innerHTML = `<span>${ad}</span><input type="range" id="surgu${i}" min="${enAz}" max="${enCok}" value="${ilk}">`;
+    l.querySelector("input").oninput = rotusUygula;
+    $("ayarlar").appendChild(l);
+  });
+  Object.entries(HAZIR).forEach(([ad, deger]) => {
+    const b = dugme("acik kucuk", ad);
+    b.onclick = () => { deger.forEach((v, i) => { $("surgu" + i).value = v; }); rotusUygula(); };
+    $("hazirlar").appendChild(b);
+  });
+}
+$("rotusBaska").onclick = () => {
+  rotusSira = (rotusSira + 1) % AYAR.fotolar.length;
+  $("rotusFoto").src = AYAR.fotolar[rotusSira];
+};
+
+/* 10: Kazı kazan */
+$("kaziFoto").src = AYAR.fotolar[AYAR.kaziFoto];
+let kaziHazir = false;
+function kaziHazirla(){
+  if (kaziHazir) return; kaziHazir = true;
+  const c = $("kazi"), kap = c.parentElement;
+  c.width = kap.clientWidth; c.height = kap.clientHeight;
+  const x = c.getContext("2d");
+  x.fillStyle = "#3f6b3a"; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = "#fff"; x.font = "20px Georgia"; x.textAlign = "center";
+  x.fillText("Parmağınla kazı 👆", c.width / 2, c.height / 2);
+  x.globalCompositeOperation = "destination-out";
+  let basili = false, sayac = 0, bitti = false;
+  function kontrol(){
+    const d = x.getImageData(0, 0, c.width, c.height).data;
+    let bos = 0, top = 0;
+    for (let i = 3; i < d.length; i += 160) { top++; if (d[i] === 0) bos++; }
+    if (bos / top > .5) {
+      bitti = true;
+      c.style.opacity = 0; c.style.pointerEvents = "none";
+      $("kaziNot").textContent = AYAR.kaziNot;
+      $("d10").classList.remove("gizli");
+    }
+  }
+  function ciz(e){
+    if (!basili || bitti) return;
+    const r = c.getBoundingClientRect();
+    x.beginPath(); x.arc(e.clientX - r.left, e.clientY - r.top, 26, 0, 7); x.fill();
+    if (++sayac % 12 === 0) kontrol();
+  }
+  c.onpointerdown = e => { basili = true; ciz(e); };
+  c.onpointermove = ciz;
+  c.onpointerup = c.onpointerleave = () => { basili = false; };
+}
+/* Kazıdıktan hemen sonraki dokunuş bazen tık üretmiyor; dokunmayı doğrudan yakala */
+$("d10").addEventListener("touchend", e => { if (!e.cancelable) return; e.preventDefault(); sonraki(); });
+
+/* 11: Final */
+let sonHazir = false;
+function sonHazirla(){
+  if (sonHazir) return; sonHazir = true;
+  $("sonBaslik").textContent = AYAR.sonBaslik;
+  $("sonYazi").textContent = AYAR.sonYazi;
+  /* Fotoğraflar iki kez dizilir; şerit yarısı kadar kayınca başa döner, kesintisiz akar */
+  const serit = document.createElement("div");
+  serit.id = "serit";
+  serit.style.animationDuration = AYAR.fotolar.length * AYAR.albumHiz + "s";
+  [...AYAR.fotolar, ...AYAR.fotolar].forEach((f, i) => {
+    const im = document.createElement("img");
+    im.src = f; im.alt = i < AYAR.fotolar.length ? "Fotoğraf " + (i + 1) : "";
+    serit.appendChild(im);
+  });
+  $("album").appendChild(serit);
+}
+</script>
+</body>
+</html>
